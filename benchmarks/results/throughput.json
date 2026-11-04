@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "machine": "arm64",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "cpus": 8
+  },
+  "sample": 500000,
+  "rows": [
+    {
+      "lines": 11175629,
+      "seconds": 34.95795520799584,
+      "templates": 48,
+      "peak_rss_mb": 235.470848,
+      "engine": "Rust core, 8 threads",
+      "dataset": "HDFS",
+      "lines_per_second": 319687.7201056608
+    },
+    {
+      "lines": 11175629,
+      "seconds": 85.15661487499892,
+      "templates": 48,
+      "peak_rss_mb": 217.153536,
+      "engine": "Rust core, 1 thread",
+      "dataset": "HDFS",
+      "lines_per_second": 131236.18190324574
+    },
+    {
+      "engine": "Python reference",
+      "dataset": "HDFS",
+      "lines": 500000,
+      "seconds": 8.382832292001694,
+      "lines_per_second": 59645.711924484596,
+      "templates": 35
+    },
+    {
+      "engine": "drain3 0.9.11",
+      "dataset": "HDFS",
+      "lines": 500000,
+      "seconds": 7.54529641699628,
+      "lines_per_second": 66266.44897259661,
+      "templates": 35
+    },
+    {
+      "lines": 4747963,
+      "seconds": 15.231072042006417,
+      "templates": 1863,
+      "peak_rss_mb": 271.613952,
+      "engine": "Rust core, 8 threads",
+      "dataset": "BGL",
+      "lines_per_second": 311728.7467950642
+    },
+    {
+      "lines": 4747963,
+      "seconds": 69.20257937500719,
+      "templates": 1863,
+      "peak_rss_mb": 150.15936,
+      "engine": "Rust core, 1 thread",
+      "dataset": "BGL",
+      "lines_per_second": 68609.62471168737
+    },
+    {
+      "engine": "Python reference",
+      "dataset": "BGL",
+      "lines": 500000,
+      "seconds": 12.676102958997944,
+      "lines_per_second": 39444.29937318254,
+      "templates": 198
+    },
+    {
+      "engine": "drain3 0.9.11",
+      "dataset": "BGL",
+      "lines": 500000,
+      "seconds": 14.192326000003959,
+      "lines_per_second": 35230.30685737211,
+      "templates": 198
+    }
+  ]
+}

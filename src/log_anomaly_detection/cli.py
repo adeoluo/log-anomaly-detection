@@ -236,7 +236,7 @@ def cmd_stream(args: argparse.Namespace) -> int:
     from itertools import islice
 
     from log_anomaly_detection.parser import iter_lines
-    from log_anomaly_detection.streaming import StreamMonitor
+    from log_anomaly_detection.streaming import Alert, StreamMonitor
 
     if not args.train:
         raise ValueError("stream needs --train to fit a detector first")
@@ -252,24 +252,31 @@ def cmd_stream(args: argparse.Namespace) -> int:
     stream = islice((line.rstrip("\n") for line in source), args.skip_lines, stop)
     start = time.perf_counter()
     alerts = []
-    for alert in monitor.process_many(stream):
-        alerts.append(alert)
-    alerts += monitor.flush()
-    seconds = time.perf_counter() - start
     shown = 0
-    for alert in alerts:
+
+    def report(alert: object) -> None:
+        nonlocal shown
+        assert isinstance(alert, Alert)
+        alerts.append(alert)
         if args.json:
-            print(json.dumps(alert.as_dict()))
-            continue
+            print(json.dumps(alert.as_dict()), flush=True)
+            return
         if shown < args.show:
             tag = ""
             if labels is not None and alert.kind == "session":
                 tag = " [labelled anomaly]" if labels.get(alert.key) else " [labelled normal]"
             print(
                 f"ALERT {alert.kind:<7} {alert.key:<28} score {alert.score:10.3f} > "
-                f"{alert.threshold:.3f}  events {alert.events}{tag}"
+                f"{alert.threshold:.3f}  events {alert.events}{tag}",
+                flush=True,
             )
             shown += 1
+
+    for alert in monitor.process_many(stream):
+        report(alert)
+    for alert in monitor.flush():
+        report(alert)
+    seconds = time.perf_counter() - start
     stats = monitor.stats
     rate = stats["lines"] / seconds if seconds > 0 else float("inf")
     summary = (

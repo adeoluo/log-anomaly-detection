@@ -1,0 +1,67 @@
+{
+  "series": 300,
+  "seed": 7,
+  "shifts": 458,
+  "summary": {
+    "CUSUM": {
+      "f1": 0.736,
+      "precision": 0.65,
+      "recall": 0.901,
+      "false_alarms_per_series": 1.34,
+      "seconds": 0.282,
+      "recall small (3-10%)": 0.45,
+      "recall medium (10-20%)": 0.891,
+      "recall large (20-30%)": 0.919
+    },
+    "BOCPD": {
+      "f1": 0.453,
+      "precision": 0.321,
+      "recall": 0.97,
+      "false_alarms_per_series": 6.107,
+      "seconds": 10.706,
+      "recall small (3-10%)": 0.73,
+      "recall medium (10-20%)": 0.989,
+      "recall large (20-30%)": 1.0
+    },
+    "ruptures Pelt (l2)": {
+      "f1": 0.9,
+      "precision": 0.908,
+      "recall": 0.934,
+      "false_alarms_per_series": 0.3,
+      "seconds": 14.619,
+      "recall small (3-10%)": 0.523,
+      "recall medium (10-20%)": 0.931,
+      "recall large (20-30%)": 1.0
+    },
+    "CUSUM + 3-point median": {
+      "f1": 0.575,
+      "precision": 0.458,
+      "recall": 0.898,
+      "false_alarms_per_series": 3.407,
+      "seconds": 0.286,
+      "recall small (3-10%)": 0.757,
+      "recall medium (10-20%)": 0.823,
+      "recall large (20-30%)": 0.808
+    },
+    "BOCPD + 3-point median": {
+      "f1": 0.758,
+      "precision": 0.711,
+      "recall": 0.988,
+      "false_alarms_per_series": 2.283,
+      "seconds": 11.685,
+      "recall small (3-10%)": 0.883,
+      "recall medium (10-20%)": 1.0,
+      "recall large (20-30%)": 1.0
+    },
+    "ruptures Pelt (l2) + 3-point median": {
+      "f1": 0.888,
+      "precision": 0.878,
+      "recall": 0.96,
+      "false_alarms_per_series": 0.417,
+      "seconds": 12.008,
+      "recall small (3-10%)": 0.658,
+      "recall medium (10-20%)": 0.971,
+      "recall large (20-30%)": 1.0
+    }
+  }
+}

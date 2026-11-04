@@ -1,0 +1,499 @@
+{
+  "meta": {
+    "machine": "arm64",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "python": "3.12.14"
+  },
+  "engines": {
+    "rust": [
+      {
+        "dataset": "Proxifier",
+        "lines": 21320,
+        "parsed_templates": 57,
+        "truth_templates": 11,
+        "ga": 0.6922607879924954,
+        "fga": 0.20588235294117646,
+        "pa": 0.6876172607879925,
+        "fta": 0.1764705882352941,
+        "parse_seconds": 0.0548,
+        "lines_per_second": 388979.5,
+        "unmatched": 0,
+        "peak_rss_mb": 55.0
+      },
+      {
+        "dataset": "Linux",
+        "lines": 23921,
+        "parsed_templates": 430,
+        "truth_templates": 338,
+        "ga": 0.6851302203085156,
+        "fga": 0.7864583333333335,
+        "pa": 0.1111157560302663,
+        "fta": 0.26302083333333337,
+        "parse_seconds": 0.0341,
+        "lines_per_second": 700756.6,
+        "unmatched": 0,
+        "peak_rss_mb": 60.2
+      },
+      {
+        "dataset": "Apache",
+        "lines": 51978,
+        "parsed_templates": 29,
+        "truth_templates": 29,
+        "ga": 1.0,
+        "fga": 1.0,
+        "pa": 0.7267497787525492,
+        "fta": 0.5172413793103449,
+        "parse_seconds": 0.0768,
+        "lines_per_second": 677205.1,
+        "unmatched": 0,
+        "peak_rss_mb": 77.3
+      },
+      {
+        "dataset": "Zookeeper",
+        "lines": 74273,
+        "parsed_templates": 77,
+        "truth_templates": 89,
+        "ga": 0.9937258492318878,
+        "fga": 0.9036144578313253,
+        "pa": 0.8431193031114941,
+        "fta": 0.6144578313253012,
+        "parse_seconds": 0.1264,
+        "lines_per_second": 587583.7,
+        "unmatched": 0,
+        "peak_rss_mb": 102.3
+      },
+      {
+        "dataset": "Hadoop",
+        "lines": 179993,
+        "parsed_templates": 322,
+        "truth_templates": 236,
+        "ga": 0.9208747006828043,
+        "fga": 0.7849462365591399,
+        "pa": 0.5410821531948464,
+        "fta": 0.38351254480286745,
+        "parse_seconds": 0.3779,
+        "lines_per_second": 476282.2,
+        "unmatched": 0,
+        "peak_rss_mb": 137.1
+      },
+      {
+        "dataset": "HealthApp",
+        "lines": 212394,
+        "parsed_templates": 27997,
+        "truth_templates": 156,
+        "ga": 0.8618416716103091,
+        "fga": 0.010158775263737433,
+        "pa": 0.3123487480813959,
+        "fta": 0.003907221255283629,
+        "parse_seconds": 3.1443,
+        "lines_per_second": 67548.5,
+        "unmatched": 0,
+        "peak_rss_mb": 137.1
+      },
+      {
+        "dataset": "OpenStack",
+        "lines": 207632,
+        "parsed_templates": 7221,
+        "truth_templates": 48,
+        "ga": 0.7517290205748632,
+        "fga": 0.006878525244187647,
+        "pa": 0.028555328658395624,
+        "fta": 0.0019259870683725408,
+        "parse_seconds": 4.0135,
+        "lines_per_second": 51733.9,
+        "unmatched": 0,
+        "peak_rss_mb": 150.5
+      },
+      {
+        "dataset": "HPC",
+        "lines": 429988,
+        "parsed_templates": 321,
+        "truth_templates": 74,
+        "ga": 0.792708168600054,
+        "fga": 0.3088607594936709,
+        "pa": 0.7208852340065304,
+        "fta": 0.15189873417721517,
+        "parse_seconds": 0.623,
+        "lines_per_second": 690141.1,
+        "unmatched": 0,
+        "peak_rss_mb": 150.5
+      },
+      {
+        "dataset": "Mac",
+        "lines": 100314,
+        "parsed_templates": 3928,
+        "truth_templates": 626,
+        "ga": 0.7605618358354767,
+        "fga": 0.22924901185770752,
+        "pa": 0.3574276770939251,
+        "fta": 0.06895037329819939,
+        "parse_seconds": 0.6638,
+        "lines_per_second": 151114.3,
+        "unmatched": 0,
+        "peak_rss_mb": 150.5
+      },
+      {
+        "dataset": "OpenSSH",
+        "lines": 638947,
+        "parsed_templates": 40,
+        "truth_templates": 38,
+        "ga": 0.7066720713924629,
+        "fga": 0.8717948717948718,
+        "pa": 0.586023566899915,
+        "fta": 0.48717948717948717,
+        "parse_seconds": 1.9145,
+        "lines_per_second": 333743.4,
+        "unmatched": 0,
+        "peak_rss_mb": 150.5
+      },
+      {
+        "dataset": "Spark",
+        "lines": 16075117,
+        "parsed_templates": 258,
+        "truth_templates": 236,
+        "ga": 0.8885734393099596,
+        "fga": 0.8704453441295545,
+        "pa": 0.3937065590253558,
+        "fta": 0.40890688259109315,
+        "parse_seconds": 45.2526,
+        "lines_per_second": 355230.8,
+        "unmatched": 0,
+        "peak_rss_mb": 951.3
+      },
+      {
+        "dataset": "Thunderbird",
+        "lines": 16601745,
+        "parsed_templates": 8254,
+        "truth_templates": 1241,
+        "ga": 0.8314507902633127,
+        "fga": 0.23696682464454974,
+        "pa": 0.21632731980885142,
+        "fta": 0.07119536598209585,
+        "parse_seconds": 70.8492,
+        "lines_per_second": 234325.1,
+        "unmatched": 0,
+        "peak_rss_mb": 951.3
+      },
+      {
+        "dataset": "BGL",
+        "lines": 4631261,
+        "parsed_templates": 414,
+        "truth_templates": 320,
+        "ga": 0.9187245115315246,
+        "fga": 0.6239782016348774,
+        "pa": 0.40735428212748104,
+        "fta": 0.19346049046321526,
+        "parse_seconds": 6.3446,
+        "lines_per_second": 729958.5,
+        "unmatched": 0,
+        "peak_rss_mb": 1273.1
+      },
+      {
+        "dataset": "HDFS",
+        "lines": 11167740,
+        "parsed_templates": 46,
+        "truth_templates": 46,
+        "ga": 0.9993715827911467,
+        "fga": 0.9347826086956522,
+        "pa": 0.6213125484654908,
+        "fta": 0.6086956521739131,
+        "parse_seconds": 22.2416,
+        "lines_per_second": 502111.1,
+        "unmatched": 0,
+        "peak_rss_mb": 1273.1
+      }
+    ],
+    "drain3": [
+      {
+        "dataset": "Proxifier",
+        "lines": 21320,
+        "parsed_templates": 57,
+        "truth_templates": 11,
+        "ga": 0.6922607879924954,
+        "fga": 0.20588235294117646,
+        "pa": 0.6876172607879925,
+        "fta": 0.1764705882352941,
+        "parse_seconds": 0.4821,
+        "lines_per_second": 44222.0
+      },
+      {
+        "dataset": "Linux",
+        "lines": 23921,
+        "parsed_templates": 419,
+        "truth_templates": 338,
+        "ga": 0.6845867647673592,
+        "fga": 0.7873183619550858,
+        "pa": 0.1109067346682831,
+        "fta": 0.261558784676354,
+        "parse_seconds": 0.274,
+        "lines_per_second": 87305.5
+      },
+      {
+        "dataset": "Apache",
+        "lines": 51978,
+        "parsed_templates": 29,
+        "truth_templates": 29,
+        "ga": 1.0,
+        "fga": 1.0,
+        "pa": 0.7267497787525492,
+        "fta": 0.5172413793103449,
+        "parse_seconds": 0.435,
+        "lines_per_second": 119495.8
+      },
+      {
+        "dataset": "Zookeeper",
+        "lines": 74273,
+        "parsed_templates": 77,
+        "truth_templates": 89,
+        "ga": 0.9937258492318878,
+        "fga": 0.9036144578313253,
+        "pa": 0.8431193031114941,
+        "fta": 0.6144578313253012,
+        "parse_seconds": 0.7827,
+        "lines_per_second": 94895.9
+      },
+      {
+        "dataset": "Hadoop",
+        "lines": 179993,
+        "parsed_templates": 322,
+        "truth_templates": 236,
+        "ga": 0.9208747006828043,
+        "fga": 0.7849462365591399,
+        "pa": 0.5410821531948464,
+        "fta": 0.38351254480286745,
+        "parse_seconds": 2.4645,
+        "lines_per_second": 73033.4
+      },
+      {
+        "dataset": "HealthApp",
+        "lines": 212394,
+        "parsed_templates": 27997,
+        "truth_templates": 156,
+        "ga": 0.8618416716103091,
+        "fga": 0.010158775263737433,
+        "pa": 0.3123487480813959,
+        "fta": 0.003907221255283629,
+        "parse_seconds": 280.0597,
+        "lines_per_second": 758.4
+      },
+      {
+        "dataset": "OpenStack",
+        "lines": 207632,
+        "parsed_templates": 7221,
+        "truth_templates": 48,
+        "ga": 0.7517290205748632,
+        "fga": 0.006878525244187647,
+        "pa": 0.028555328658395624,
+        "fta": 0.0019259870683725408,
+        "parse_seconds": 61.7703,
+        "lines_per_second": 3361.4
+      },
+      {
+        "dataset": "HPC",
+        "lines": 429988,
+        "parsed_templates": 321,
+        "truth_templates": 74,
+        "ga": 0.792708168600054,
+        "fga": 0.3088607594936709,
+        "pa": 0.7208852340065304,
+        "fta": 0.15189873417721517,
+        "parse_seconds": 9.0951,
+        "lines_per_second": 47276.9
+      },
+      {
+        "dataset": "Mac",
+        "lines": 100314,
+        "parsed_templates": 3928,
+        "truth_templates": 626,
+        "ga": 0.7605618358354767,
+        "fga": 0.22924901185770752,
+        "pa": 0.3574276770939251,
+        "fta": 0.06895037329819939,
+        "parse_seconds": 6.0931,
+        "lines_per_second": 16463.4
+      },
+      {
+        "dataset": "OpenSSH",
+        "lines": 638947,
+        "parsed_templates": 40,
+        "truth_templates": 38,
+        "ga": 0.7066720713924629,
+        "fga": 0.8717948717948718,
+        "pa": 0.586023566899915,
+        "fta": 0.48717948717948717,
+        "parse_seconds": 15.1646,
+        "lines_per_second": 42134.0
+      },
+      {
+        "dataset": "Spark",
+        "lines": 16075117,
+        "parsed_templates": 258,
+        "truth_templates": 236,
+        "ga": 0.8885734393099596,
+        "fga": 0.8704453441295545,
+        "pa": 0.3937065590253558,
+        "fta": 0.40890688259109315,
+        "parse_seconds": 454.6765,
+        "lines_per_second": 35355.1
+      },
+      {
+        "dataset": "Thunderbird",
+        "lines": 16601745,
+        "parsed_templates": 8254,
+        "truth_templates": 1241,
+        "ga": 0.8314507902633127,
+        "fga": 0.23696682464454974,
+        "pa": 0.21632731980885142,
+        "fta": 0.07119536598209585,
+        "parse_seconds": 728.5324,
+        "lines_per_second": 22787.9
+      },
+      {
+        "dataset": "BGL",
+        "lines": 4631261,
+        "parsed_templates": 414,
+        "truth_templates": 320,
+        "ga": 0.9187245115315246,
+        "fga": 0.6239782016348774,
+        "pa": 0.40735428212748104,
+        "fta": 0.19346049046321526,
+        "parse_seconds": 32.0824,
+        "lines_per_second": 144355.1
+      },
+      {
+        "dataset": "HDFS",
+        "lines": 11167740,
+        "parsed_templates": 46,
+        "truth_templates": 46,
+        "ga": 0.9993715827911467,
+        "fga": 0.9347826086956522,
+        "pa": 0.6213125484654908,
+        "fta": 0.6086956521739131,
+        "parse_seconds": 111.9135,
+        "lines_per_second": 99789.0
+      }
+    ]
+  },
+  "average": {
+    "rust": {
+      "ga": 0.8431,
+      "fga": 0.5553,
+      "pa": 0.4681,
+      "fta": 0.2822
+    },
+    "drain3": {
+      "ga": 0.8431,
+      "fga": 0.5553,
+      "pa": 0.4681,
+      "fta": 0.2821
+    }
+  },
+  "published_drain": {
+    "Proxifier": {
+      "GA": 0.692,
+      "FGA": 0.206,
+      "PA": 0.688,
+      "FTA": 0.176
+    },
+    "Linux": {
+      "GA": 0.686,
+      "FGA": 0.778,
+      "PA": 0.111,
+      "FTA": 0.259
+    },
+    "Apache": {
+      "GA": 1.0,
+      "FGA": 1.0,
+      "PA": 0.727,
+      "FTA": 0.517
+    },
+    "Zookeeper": {
+      "GA": 0.994,
+      "FGA": 0.904,
+      "PA": 0.843,
+      "FTA": 0.614
+    },
+    "Hadoop": {
+      "GA": 0.921,
+      "FGA": 0.785,
+      "PA": 0.541,
+      "FTA": 0.384
+    },
+    "HealthApp": {
+      "GA": 0.862,
+      "FGA": 0.01,
+      "PA": 0.312,
+      "FTA": 0.004
+    },
+    "OpenStack": {
+      "GA": 0.752,
+      "FGA": 0.007,
+      "PA": 0.029,
+      "FTA": 0.002
+    },
+    "HPC": {
+      "GA": 0.793,
+      "FGA": 0.309,
+      "PA": 0.721,
+      "FTA": 0.152
+    },
+    "Mac": {
+      "GA": 0.761,
+      "FGA": 0.229,
+      "PA": 0.357,
+      "FTA": 0.069
+    },
+    "OpenSSH": {
+      "GA": 0.707,
+      "FGA": 0.872,
+      "PA": 0.586,
+      "FTA": 0.487
+    },
+    "Spark": {
+      "GA": 0.888,
+      "FGA": 0.861,
+      "PA": 0.394,
+      "FTA": 0.412
+    },
+    "Thunderbird": {
+      "GA": 0.831,
+      "FGA": 0.237,
+      "PA": 0.216,
+      "FTA": 0.071
+    },
+    "BGL": {
+      "GA": 0.919,
+      "FGA": 0.624,
+      "PA": 0.407,
+      "FTA": 0.193
+    },
+    "HDFS": {
+      "GA": 0.999,
+      "FGA": 0.935,
+      "PA": 0.621,
+      "FTA": 0.609
+    },
+    "Average": {
+      "GA": 0.84,
+      "FGA": 0.55,
+      "PA": 0.47,
+      "FTA": 0.28
+    }
+  },
+  "published_drain_seconds": {
+    "Proxifier": 2.89,
+    "Linux": 2.59,
+    "Apache": 5.08,
+    "Zookeeper": 6.99,
+    "Hadoop": 19.34,
+    "HealthApp": 17.66,
+    "OpenStack": 64.3,
+    "HPC": 37.84,
+    "Mac": 17.06,
+    "OpenSSH": 74.06,
+    "Spark": 1593.77,
+    "Thunderbird": 2491.79,
+    "BGL": 498.26,
+    "HDFS": 1123.34
+  }
+}
