@@ -128,8 +128,13 @@ def cmd_detect(args: argparse.Namespace) -> int:
         f"({summary['anomalous']:,} anomalous), {summary['templates']} templates, "
         f"parsed in {summary['parse_seconds']} s"
     )
+    neural = {"epochs": args.epochs, "device": args.device}
     report = evaluate_dataset(
-        dataset, args.detectors, train_fraction=args.train_fraction, seed=args.seed
+        dataset,
+        args.detectors,
+        train_fraction=args.train_fraction,
+        seed=args.seed,
+        detector_kwargs={"deeplog": neural, "transformer": neural},
     )
     split = report["split"]
     print(
@@ -190,8 +195,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--detectors",
         nargs="+",
         default=["pca", "invariants", "logcluster", "iforest"],
-        choices=["pca", "invariants", "logcluster", "iforest"],
+        choices=["pca", "invariants", "logcluster", "iforest", "deeplog", "transformer"],
     )
+    p.add_argument("--epochs", type=int, default=10, help="DeepLog and transformer epochs")
+    p.add_argument("--device", default="auto", help="torch device for neural detectors")
     p.add_argument("--output", help="write the report as JSON")
     p.set_defaults(func=cmd_detect)
     return root

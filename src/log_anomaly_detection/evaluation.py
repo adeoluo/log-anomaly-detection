@@ -105,6 +105,29 @@ def run_count_detector(
     return DetectorResult(detector.name, result, fit_seconds, score_seconds, detector.params())
 
 
+def run_sequence_detector(
+    name: str,
+    dataset: SessionDataset,
+    split: Split,
+    **kwargs: Any,
+) -> DetectorResult:
+    from log_anomaly_detection.detectors.sequence import SEQUENCE_DETECTORS
+
+    detector = SEQUENCE_DETECTORS[name](**kwargs)
+    start = time.perf_counter()
+    detector.fit(dataset.sequences.subset(split.train_normal), dataset.n_events)
+    fit_seconds = time.perf_counter() - start
+    start = time.perf_counter()
+    raw = detector.score(dataset.sequences.subset(split.test))
+    decided = raw > detector.threshold_
+    score_seconds = time.perf_counter() - start
+    result = evaluate(dataset.labels[split.test], decided, raw)
+    return DetectorResult(detector.name, result, fit_seconds, score_seconds, detector.params())
+
+
+SEQUENCE_NAMES = ("deeplog", "transformer")
+
+
 def evaluate_dataset(
     dataset: SessionDataset,
     detectors: list[str],
@@ -113,7 +136,7 @@ def evaluate_dataset(
     seed: int = 0,
     detector_kwargs: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Fit and score each named count detector on ``dataset``; return a JSON-ready report."""
+    """Fit and score each named detector on ``dataset``; return a JSON-ready report."""
 
     split = Split.make(dataset.labels, train_fraction)
     counts = count_matrix(dataset.sequences, dataset.n_events)
@@ -121,11 +144,14 @@ def evaluate_dataset(
     results = []
     for name in detectors:
         kwargs = dict(detector_kwargs.get(name, {}))
-        if name == "iforest":
+        if name in ("iforest", *SEQUENCE_NAMES):
             kwargs.setdefault("seed", seed)
-        results.append(
-            run_count_detector(build_detector(name, **kwargs), counts, dataset.labels, split)
-        )
+        if name in SEQUENCE_NAMES:
+            results.append(run_sequence_detector(name, dataset, split, **kwargs))
+        else:
+            results.append(
+                run_count_detector(build_detector(name, **kwargs), counts, dataset.labels, split)
+            )
     return {
         "dataset": dataset.summary(),
         "split": {"train_fraction": train_fraction, **split.describe(dataset.labels)},
