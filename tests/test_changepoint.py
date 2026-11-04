@@ -99,6 +99,20 @@ def test_detect_regressions_directions() -> None:
         detect_regressions(latency, method="magic")
 
 
+def test_spikes_are_not_level_shifts() -> None:
+    from log_anomaly_detection.changepoint import drop_short_segments
+
+    assert drop_short_segments([90, 91, 180], 300, 3) == [180]
+    assert drop_short_segments([1, 150], 300, 3) == [150]
+    assert drop_short_segments([150, 299], 300, 3) == [150]
+    assert drop_short_segments([5, 6], 300, 1) == [5, 6]
+    x = np.full(200, 100.0)
+    x[50] = 160.0
+    x[120:] = 112.0
+    found = detect_regressions(x, method="bocpd", direction="both")
+    assert [r.index for r in found] == [120]
+
+
 def test_parameter_validation() -> None:
     with pytest.raises(ValueError):
         CUSUM(threshold=0)

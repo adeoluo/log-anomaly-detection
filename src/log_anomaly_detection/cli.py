@@ -179,7 +179,11 @@ def cmd_regress(args: argparse.Namespace) -> int:
     if len(values) < 3:
         raise ValueError("need at least 3 numeric values")
     found = detect_regressions(
-        values, method=args.method, direction=args.direction, min_relative=args.min_relative
+        values,
+        method=args.method,
+        direction=args.direction,
+        min_relative=args.min_relative,
+        min_segment=args.min_segment,
     )
     if args.json:
         print(json.dumps({"points": len(values), "regressions": [r.as_dict() for r in found]}))
@@ -369,6 +373,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--method", default="cusum", choices=["cusum", "bocpd"])
     p.add_argument("--direction", default="up", choices=["up", "down", "both"])
     p.add_argument("--min-relative", type=float, default=0.05, help="smallest relative shift")
+    p.add_argument("--min-segment", type=int, default=3, help="shorter segments are spikes")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_regress)
 
