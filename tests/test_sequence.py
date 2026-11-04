@@ -47,9 +47,9 @@ TINY = {
 
 
 def workflow() -> tuple[Sequences, Sequences, np.ndarray]:
-    normal = [[0, 1, 2, 3, 4]] * 30 + [[0, 1, 2, 3]] * 10
-    test = [[0, 1, 2, 3, 4], [0, 1, 3, 2, 4], [0, 1, 2, 3, 4, 6], [0, 1, 2, 3], []]
-    labels = np.array([0, 1, 1, 0, 0])
+    normal = [[0, 1, 2, 3, 4]] * 40
+    test = [[0, 1, 2, 3, 4], [0, 1, 3, 2, 4], [0, 1, 2, 3, 4, 6], [0, 1, 2], [0, 1, 2, 3, 4]]
+    labels = np.array([0, 1, 1, 1, 0])
     return Sequences.from_lists(normal), Sequences.from_lists(test), labels
 
 
@@ -60,10 +60,17 @@ def test_learns_the_workflow(name: str) -> None:
     pred = det.predict(test)
     assert pred.tolist() == labels.astype(bool).tolist()
     scores = det.score(test)
-    assert scores[2] == 5  # the unseen event 6 ranks below every known event
-    assert scores[4] == 0  # an empty sequence has nothing to check
+    assert scores[2] == 6  # the unseen event 6 ranks below every known event and the end token
+    assert scores[0] == scores[4] == 0
     params = det.params()
     assert params["distinct_windows"] <= params["train_windows"] and params["final_loss"] < 1.0
+
+
+def test_without_end_token_truncation_goes_unnoticed() -> None:
+    train, test, _ = workflow()
+    det = DeepLogDetector(seed=1, end_token=False, **TINY).fit(train, n_events=5)
+    assert det.predict(test).tolist() == [False, True, True, False, False]
+    assert det.params()["end_token"] is False
 
 
 def test_training_is_reproducible() -> None:
@@ -85,4 +92,6 @@ def test_errors() -> None:
         det._ranks(np.zeros((1, 10), np.int32), np.zeros(1, np.int32))
     with pytest.raises(ValueError):
         det.fit(Sequences.from_lists([[]]), 3)
+    with pytest.raises(ValueError):
+        det.fit(Sequences.from_lists([[-1, 2]]), 3)
     assert TransformerDetector().params()["heads"] == 4
