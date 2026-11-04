@@ -20,12 +20,16 @@ are counted, move the metrics by several points, which would make any comparison
   agrees to every printed digit; `tests/test_loghub.py` pins those values.
 * Fix one defect: in the LogPAI code a message with fewer tokens than the tree depth is never
   stored in a leaf, so every repeat of a short message starts a new cluster. Here such a message
-  is stored at the node where its tokens run out. On the Loghub-2k and Loghub-2.0 settings this
-  changes no published result, because no such messages occur at those depths, but it matters for
-  arbitrary logs.
+  is stored at the node where its tokens run out (drain3 also handles this case).
 
 ## Consequences
 
+* On Loghub-2k the templates are identical to the LogPAI code's on all 14 datasets. On
+  Loghub-2.0, 12 of 14 datasets match the published numbers to three decimals. Linux and Spark
+  differ slightly (Linux FGA 0.786 against 0.778, Spark FGA 0.870 against 0.861). Rerunning
+  the LogPAI code on Linux reproduces the published figures, so that difference comes from this
+  fix; Spark was not rerun with the LogPAI code (it needs more memory than the test machine has
+  for 16 million lines), and drain3 agrees with this package there.
 * Accuracy numbers can be compared directly with the published tables, and the comparison with
   the drain3 library uses the same masks, depth and threshold.
 * The parser inherits Drain's known weaknesses (for example low PA, because masked tokens and

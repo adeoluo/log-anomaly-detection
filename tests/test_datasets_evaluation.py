@@ -62,7 +62,19 @@ def test_splits() -> None:
     labels = np.array([1, 0, 0, 1, 0, 1], dtype=np.uint8)
     split = Split.make(labels, 0.5)
     assert split.train_normal.tolist() == [1, 2]
-    assert split.describe(labels) == {"train": 3, "train_normal": 2, "test": 3, "test_anomalies": 2}
+    assert split.describe(labels) == {
+        "train": 3,
+        "train_normal": 2,
+        "validation": 0,
+        "validation_anomalies": 0,
+        "test": 3,
+        "test_anomalies": 2,
+    }
+    held = Split.make(np.array([0, 0, 0, 1, 0, 0, 1, 0, 1, 0], dtype=np.uint8), 0.8, 0.3)
+    assert held.train.tolist() == [0, 1, 2, 3, 4] and held.validation.tolist() == [5, 6, 7]
+    assert held.train_normal.tolist() == [0, 1, 2, 4]
+    with pytest.raises(ValueError, match="validation_fraction"):
+        Split.make(labels, 0.5, 0.6)
     with pytest.raises(ValueError, match="no normal"):
         Split.make(np.ones(4, np.uint8), 0.5)
     with pytest.raises(ValueError, match="empty"):
@@ -72,13 +84,39 @@ def test_splits() -> None:
 def test_evaluate_dataset_on_bgl(loghub_2k: Path) -> None:
     ds = load_bgl(loghub_2k / "BGL_2k.log.gz", window_lines=20)
     report = evaluate_dataset(
-        ds, ["pca", "invariants", "logcluster", "iforest"], train_fraction=0.5
+        ds,
+        ["pca", "invariants", "logcluster", "iforest"],
+        train_fraction=0.5,
+        validation_fraction=0.0,
     )
     assert report["split"]["test"] == 50
     names = [r["detector"] for r in report["results"]]
     assert names == ["PCA", "Invariant mining", "LogCluster", "Isolation forest"]
     for r in report["results"]:
         assert 0 <= r["f1"] <= 1 and r["n"] == 50 and r["fit_seconds"] >= 0
+
+
+def test_validation_tuned_thresholds(loghub_2k: Path) -> None:
+    ds = load_bgl(loghub_2k / "BGL_2k.log.gz", window_lines=10)
+    report = evaluate_dataset(
+        ds,
+        ["pca", "deeplog"] if _torch() else ["pca"],
+        train_fraction=0.6,
+        validation_fraction=0.3,
+        detector_kwargs={"deeplog": {"epochs": 1, "device": "cpu"}},
+    )
+    assert report["split"]["validation"] == 60
+    for r in report["results"]:
+        if report["split"]["validation_anomalies"]:
+            assert "tuned" in r and 0 <= r["tuned"]["f1"] <= 1
+
+
+def _torch() -> bool:
+    try:
+        import torch  # noqa: F401
+    except ImportError:
+        return False
+    return True
 
 
 def test_unknown_detector() -> None:

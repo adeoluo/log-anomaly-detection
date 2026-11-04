@@ -6,8 +6,10 @@ the event that actually occurred is not among the model's ``top_g`` most likely 
 sequence is anomalous. The per-sequence score is the worst rank (0 = the most likely event) of any
 actual event, so ``score > top_g - 0.5`` reproduces DeepLog's decision and ROC AUC uses the ranks.
 
-Sequences are left-padded so the first events are checked too, and events never seen in training
-map to an "unknown" token the model can never rank highly. Because logs repeat themselves, both
+Sequences are left-padded so the first events are checked too, an end-of-session token is
+appended so that a session which stops early (a common HDFS failure: the block is never
+replicated or deleted) is checked as well, and events never seen in training map to an "unknown"
+token the model can never rank highly. Because logs repeat themselves, both
 training and scoring work on distinct (history, next event) windows with counts: HDFS's millions
 of windows reduce to tens of thousands. Requires PyTorch (``uv sync --extra deep``); runs on CUDA,
 Apple MPS or CPU.
@@ -103,6 +105,7 @@ class NextEventDetector:
         learning_rate: float = 1e-3,
         device: str = "auto",
         seed: int = 0,
+        end_token: bool = True,
     ) -> None:
         if window < 1 or top_g < 1 or epochs < 1 or batch_size < 1 or samples_per_epoch < 1:
             raise ValueError("window, top_g, epochs, batch_size and samples must be positive")
@@ -117,6 +120,7 @@ class NextEventDetector:
         self.learning_rate = learning_rate
         self.device_name = device
         self.seed = seed
+        self.end_token = end_token
         self.threshold_ = top_g - 0.5
         self.vocab_: int = 0
         self.model_: Any = None
@@ -125,7 +129,7 @@ class NextEventDetector:
         self.distinct_windows_: int = 0
         self.train_seconds_: float = 0.0
 
-    # tokens: 0..n_events-1 events, n_events = unknown, n_events + 1 = padding
+    # tokens: 0..n_events-1 events, n_events = unknown, n_events + 1 = padding, n_events + 2 = end
     def _build(self, vocab: int) -> Any:  # pragma: no cover - overridden
         raise NotImplementedError
 
@@ -139,6 +143,7 @@ class NextEventDetector:
             "epochs": self.epochs,
             "samples_per_epoch": self.samples_per_epoch,
             "seed": self.seed,
+            "end_token": self.end_token,
             "train_windows": self.train_windows_,
             "distinct_windows": self.distinct_windows_,
             "final_loss": round(self.history_[-1], 4) if self.history_ else None,
@@ -146,13 +151,26 @@ class NextEventDetector:
 
     def _encode(self, seqs: Sequences) -> Sequences:
         unknown = self.vocab_
-        return Sequences(np.minimum(seqs.events, unknown), seqs.offsets.copy())
+        events = np.minimum(seqs.events, unknown)
+        if not self.end_token:
+            return Sequences(events, seqs.offsets.copy())
+        n = len(seqs)
+        offsets = seqs.offsets + np.arange(n + 1, dtype=np.int64)
+        out = np.empty(events.size + n, dtype=np.int64)
+        ends = offsets[1:] - 1
+        mask = np.ones(out.size, dtype=bool)
+        mask[ends] = False
+        out[mask] = events
+        out[ends] = unknown + 2
+        return Sequences(out, offsets)
 
     def fit(self, seqs: Sequences, n_events: int) -> NextEventDetector:
         import torch
 
         if len(seqs) == 0 or seqs.events.size == 0:
             raise ValueError("cannot fit on empty sequences")
+        if int(np.min(seqs.events)) < 0:
+            raise ValueError("event ids must be non-negative")
         start = time.perf_counter()
         torch.manual_seed(self.seed)
         rng = np.random.default_rng(self.seed)
@@ -163,7 +181,7 @@ class NextEventDetector:
         self.train_windows_ = int(weights.sum())
         self.distinct_windows_ = int(weights.size)
         device = _device(self.device_name)
-        model = self._build(n_events + 2).to(device)
+        model = self._build(n_events + 3).to(device)
         optim = torch.optim.Adam(model.parameters(), lr=self.learning_rate)
         loss_fn = torch.nn.CrossEntropyLoss()
         x_all = torch.from_numpy(hist.astype(np.int64))
@@ -207,16 +225,16 @@ class NextEventDetector:
                 yb = torch.from_numpy(nxt[b : b + 8192].astype(np.int64)).to(device)
                 logits = self.model_(xb).float()
                 # Unknown and padding tokens are never valid predictions.
-                logits[:, self.vocab_ :] = -math.inf
+                logits[:, self.vocab_ : self.vocab_ + 2] = -math.inf
                 actual = logits.gather(1, yb[:, None])
                 rank = (logits > actual).sum(dim=1)
-                unknown = yb >= self.vocab_
-                rank[unknown] = self.vocab_
+                unknown = yb == self.vocab_
+                rank[unknown] = self.vocab_ + 1
                 out[b : b + 8192] = rank.cpu().numpy()
         return out
 
     def score(self, seqs: Sequences) -> NDArray[np.float64]:
-        """Worst rank of any actual event in each sequence (empty sequences score 0)."""
+        """Worst rank of any actual event (and of the session end) in each sequence."""
 
         if self.model_ is None:
             raise RuntimeError(f"{self.name} is not fitted")

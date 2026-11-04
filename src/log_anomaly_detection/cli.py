@@ -106,13 +106,19 @@ def load_dataset(args: argparse.Namespace) -> object:
 
 
 def print_results(results: list[dict[str, object]]) -> None:
-    print(f"{'detector':<18} {'precision':>9} {'recall':>7} {'F1':>6} {'ROC AUC':>8} {'AP':>6}")
+    print(
+        f"{'detector':<18} {'precision':>9} {'recall':>7} {'F1':>6} {'ROC AUC':>8} {'AP':>6}"
+        f" {'tuned F1':>9}"
+    )
     for r in results:
         auc = r.get("roc_auc")
         ap = r.get("average_precision")
+        tuned = r.get("tuned")
+        tf1 = "n/a" if not isinstance(tuned, dict) else f"{tuned['f1']:.3f}"
         print(
             f"{r['detector']!s:<18} {r['precision']:>9.3f} {r['recall']:>7.3f} {r['f1']:>6.3f} "
             f"{'n/a' if auc is None else f'{auc:.3f}':>8} {'n/a' if ap is None else f'{ap:.3f}':>6}"
+            f" {tf1:>9}"
         )
 
 
@@ -133,12 +139,14 @@ def cmd_detect(args: argparse.Namespace) -> int:
         dataset,
         args.detectors,
         train_fraction=args.train_fraction,
+        validation_fraction=args.validation_fraction,
         seed=args.seed,
         detector_kwargs={"deeplog": neural, "transformer": neural},
     )
     split = report["split"]
     print(
         f"train {split['train']:,} ({split['train_normal']:,} normal), "
+        f"validation {split['validation']:,}, "
         f"test {split['test']:,} ({split['test_anomalies']:,} anomalous)"
     )
     print_results(report["results"])
@@ -320,7 +328,13 @@ def add_dataset_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--step", type=int, help="BGL window step, seconds (default: the window)")
     p.add_argument("--window-lines", type=int, help="BGL windows of this many lines instead")
     p.add_argument("--max-lines", type=int)
-    p.add_argument("--train-fraction", type=float, default=0.5)
+    p.add_argument("--train-fraction", type=float, default=0.8)
+    p.add_argument(
+        "--validation-fraction",
+        type=float,
+        default=0.1,
+        help="end of the training period held out to tune thresholds (0 to skip)",
+    )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--backend", default="auto", choices=["auto", "rust", "python"])
 
