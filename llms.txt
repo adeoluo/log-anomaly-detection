@@ -1,0 +1,56 @@
+# Log Anomaly Detection
+
+> Log parsing and anomaly detection for large clusters: a Drain parser with a Rust core, six detectors from PCA to a transformer, streaming alerts, and change-point detection for metric regressions, measured on Loghub, Loghub-2.0 and TCPD.
+
+Languages: Python, Rust. License: MIT. Source: https://github.com/adeoluo/log-anomaly-detection
+
+## Docs
+
+- [README](https://github.com/adeoluo/log-anomaly-detection/blob/main/README.md): motivation, architecture, results, quickstart, usage, design decisions, testing, responsible ai, limitations, roadmap
+- [AGENTS.md](https://github.com/adeoluo/log-anomaly-detection/blob/main/AGENTS.md): layout, commands and conventions for changing the code
+- [Architecture diagram](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/architecture/architecture.mmd): Mermaid source of the component diagram
+- [Architecture](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/ARCHITECTURE.md)
+- [Data Card - Log Anomaly Detection](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/DATA_CARD.md)
+- [Definition of Done](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/DEFINITION_OF_DONE.md)
+- [Evaluation Report - Log Anomaly Detection](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/EVALUATION_REPORT.md)
+- [Model / System Card - Log Anomaly Detection](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/MODEL_CARD.md)
+- [Threat Model - Log Anomaly Detection](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/THREAT_MODEL.md)
+- [ADR-0001: Record architecture decisions](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/0001-record-architecture-decisions.md)
+- [ADR-0002: A Rust Drain core that reproduces the Python reference exactly](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/0002-rust-drain-core-with-parity.md)
+- [ADR-0003: Follow the LogPAI Drain and the Loghub-2.0 evaluator, with one fix](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/0003-follow-logpai-drain-and-evaluator.md)
+- [ADR-0004: Chronological split, normal-only training, own rules and validation thresholds](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/0004-normal-only-training-and-own-decision-rules.md)
+- [ADR-0005: CUSUM and BOCPD for performance-baseline regressions](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/0005-change-point-detectors.md)
+- [ADR-0006: Score distinct sequences and windows, then expand](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/0006-dedupe-before-scoring.md)
+- [ADR-NNNN: <short title>](https://github.com/adeoluo/log-anomaly-detection/blob/main/docs/adr/template.md)
+- [Changelog](https://github.com/adeoluo/log-anomaly-detection/blob/main/CHANGELOG.md): release history
+
+## Source
+
+- [rust/src/drain.rs](https://github.com/adeoluo/log-anomaly-detection/blob/main/rust/src/drain.rs): Drain: the fixed-depth parse-tree log parser, identical to the Python reference in `src/log_anomaly_detection/drain.py`.
+- [rust/src/lib.rs](https://github.com/adeoluo/log-anomaly-detection/blob/main/rust/src/lib.rs): Rust core of log-anomaly-detection.
+- [rust/src/pipeline.rs](https://github.com/adeoluo/log-anomaly-detection/blob/main/rust/src/pipeline.rs): Log formats and batch or file parsing: header extraction, masking and tokenizing run in parallel chunks, then messages enter the (sequential) Drain tree in input order.
+- [rust/src/python.rs](https://github.com/adeoluo/log-anomaly-detection/blob/main/rust/src/python.rs): PyO3 bindings, built by maturin into the `log_anomaly_rs` extension module.
+- [src/log_anomaly_detection/__init__.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/__init__.py): Log parsing and anomaly detection for large clusters.
+- [src/log_anomaly_detection/backend.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/backend.py): The Rust backend, compiled into the package on install and used by default.
+- [src/log_anomaly_detection/changepoint.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/changepoint.py): Change-point detection for performance-baseline regressions: CUSUM and Bayesian online CPD.
+- [src/log_anomaly_detection/cli.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/cli.py): Command line interface: ``python -m log_anomaly_detection <command>``.
+- [src/log_anomaly_detection/configuration.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/configuration.py): Typed service settings loaded from the environment (prefix ``LAD_``) or a ``.env`` file.
+- [src/log_anomaly_detection/datasets.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/datasets.py): Anomaly-detection datasets: HDFS sessions and BGL windows, parsed straight from the raw logs.
+- [src/log_anomaly_detection/detectors/__init__.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/__init__.py): Anomaly detectors over event counts (PCA, invariant mining, LogCluster, isolation forest).
+- [src/log_anomaly_detection/detectors/base.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/base.py): The detector interface shared by every model.
+- [src/log_anomaly_detection/detectors/iforest.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/iforest.py): Isolation forest (Liu, Ting and Zhou, ICDM 2008), implemented with numpy.
+- [src/log_anomaly_detection/detectors/invariants.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/invariants.py): Invariant mining (Lou et al., USENIX ATC 2010): sparse integer relations among event counts.
+- [src/log_anomaly_detection/detectors/logcluster.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/logcluster.py): LogCluster (Lin et al., ICSE 2016): cluster normal sequences, flag rows far from every cluster.
+- [src/log_anomaly_detection/detectors/pca.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/pca.py): PCA anomaly detection (Xu et al., SOSP 2009) with the squared prediction error statistic.
+- [src/log_anomaly_detection/detectors/sequence.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/detectors/sequence.py): Next-event sequence detectors: DeepLog (Du et al., CCS 2017) and a transformer variant.
+- [src/log_anomaly_detection/drain.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/drain.py): Drain, the fixed-depth parse-tree log parser (He et al., ICWS 2017): reference implementation.
+- [src/log_anomaly_detection/evaluation.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/evaluation.py): Anomaly-detection evaluation: chronological split, normal-only training, test scoring.
+- [src/log_anomaly_detection/features.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/features.py): Feature extraction: event sequences per session or time window, and event count matrices.
+- [src/log_anomaly_detection/formats.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/formats.py): Log line formats and the per-dataset parser settings used by the Loghub benchmarks.
+- [src/log_anomaly_detection/loghub.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/loghub.py): Loghub parsing benchmarks: locate datasets, parse them, score them, time them.
+- [src/log_anomaly_detection/metrics.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/metrics.py): Detection metrics: precision, recall, F1, ROC AUC and average precision, vectorized.
+- [src/log_anomaly_detection/observability.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/observability.py): Thread-safe request and pipeline metrics, exported in the Prometheus text format.
+- [src/log_anomaly_detection/parser.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/parser.py): High-level log parsing: one API over the Rust core and the Python reference.
+- [src/log_anomaly_detection/parsing_metrics.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/parsing_metrics.py): Log parsing accuracy metrics, computed exactly as the Loghub-2.0 benchmark computes them.
+- [src/log_anomaly_detection/service.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/service.py): HTTP service (standard library): parse lines, ingest a stream, score sessions, find regressions.
+- [src/log_anomaly_detection/streaming.py](https://github.com/adeoluo/log-anomaly-detection/blob/main/src/log_anomaly_detection/streaming.py): Streaming detection: parse lines as they arrive, close sessions, score them, raise alerts.
