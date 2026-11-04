@@ -105,3 +105,25 @@ def test_detect_with_neural_detectors(loghub_2k: Path, capsys: pytest.CaptureFix
     assert main([*args, *extra, "--detectors", "deeplog", "transformer"]) == 0
     out = capsys.readouterr().out
     assert "DeepLog" in out and "Transformer" in out
+
+
+def test_regress_command(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    import numpy as np
+
+    rng = np.random.default_rng(0)
+    values = np.concatenate([rng.normal(100, 1, 80), rng.normal(120, 1, 80)])
+    plain = tmp_path / "latency.txt"
+    plain.write_text("latency\n" + "\n".join(f"{v:.3f}" for v in values) + "\n\n")
+    assert main(["regress", str(plain)]) == 0
+    assert "level shift" in capsys.readouterr().out
+    table = tmp_path / "latency.csv"
+    table.write_text(
+        "build,p95\n" + "".join(f"{i},{v:.3f}\n" for i, v in enumerate(values)) + "x,\n"
+    )
+    assert main(["regress", str(table), "--column", "p95", "--method", "bocpd", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["points"] == 160 and len(payload["regressions"]) == 1
+    assert main(["regress", str(table), "--column", "nope"]) == 2
+    short = tmp_path / "short.txt"
+    short.write_text("1\n2\n")
+    assert main(["regress", str(short)]) == 2
