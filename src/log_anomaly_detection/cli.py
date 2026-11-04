@@ -147,6 +147,49 @@ def cmd_detect(args: argparse.Namespace) -> int:
     return 0
 
 
+def read_series(path: str, column: str | None) -> list[float]:
+    """Numbers from a one-column text file or a CSV column (blank and non-numeric lines skipped)."""
+
+    import csv
+
+    values: list[float] = []
+    with open(path, newline="", encoding="utf-8") as handle:
+        if column is None:
+            for line in handle:
+                try:
+                    values.append(float(line.strip()))
+                except ValueError:
+                    continue
+            return values
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None or column not in reader.fieldnames:
+            raise ValueError(f"column {column!r} not found in {path}")
+        for row in reader:
+            try:
+                values.append(float(row[column]))
+            except (TypeError, ValueError):
+                continue
+    return values
+
+
+def cmd_regress(args: argparse.Namespace) -> int:
+    from log_anomaly_detection.changepoint import detect_regressions
+
+    values = read_series(args.input, args.column)
+    if len(values) < 3:
+        raise ValueError("need at least 3 numeric values")
+    found = detect_regressions(
+        values, method=args.method, direction=args.direction, min_relative=args.min_relative
+    )
+    if args.json:
+        print(json.dumps({"points": len(values), "regressions": [r.as_dict() for r in found]}))
+        return 0
+    print(f"{len(values)} points, {args.method}: {len(found)} level shift(s) ({args.direction})")
+    for r in found:
+        print(f"  at index {r.index:>5}: {r.before:,.3f} -> {r.after:,.3f} ({r.relative:+.1%})")
+    return 0
+
+
 def add_dataset_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--dataset", required=True, choices=["hdfs", "bgl"])
     p.add_argument("--log", required=True, help="raw log file (.gz allowed)")
@@ -201,6 +244,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--device", default="auto", help="torch device for neural detectors")
     p.add_argument("--output", help="write the report as JSON")
     p.set_defaults(func=cmd_detect)
+
+    p = sub.add_parser("regress", help="find level shifts (regressions) in a numeric metric")
+    p.add_argument("input", help="text file with one number per line, or a CSV with --column")
+    p.add_argument("--column", help="CSV column holding the metric")
+    p.add_argument("--method", default="cusum", choices=["cusum", "bocpd"])
+    p.add_argument("--direction", default="up", choices=["up", "down", "both"])
+    p.add_argument("--min-relative", type=float, default=0.05, help="smallest relative shift")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_regress)
     return root
 
 
