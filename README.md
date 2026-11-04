@@ -85,4 +85,4 @@ Honest list of what this does **not** do, known failure modes, and where it brea
 
 ## License
 
-[MIT](LICENSE) · Part of a [24-project AI-engineering portfolio](PORTFOLIO_URL).
+Released under the [MIT License](LICENSE).
