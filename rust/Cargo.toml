@@ -1,0 +1,29 @@
+[package]
+name = "log-anomaly-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust core of log-anomaly-detection: the Drain log parser and streaming file parsing, identical to the Python reference"
+license = "MIT"
+authors = ["Adeolu Ogunnoiki"]
+repository = "https://github.com/adeoluo/log-anomaly-detection"
+publish = false
+
+[lib]
+name = "log_anomaly_rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+# Enabled by maturin (see pyproject.toml). Plain `cargo test` builds the core without Python.
+python = ["dep:pyo3"]
+
+[dependencies]
+pyo3 = { version = "0.30", optional = true, features = ["abi3-py311"] }
+flate2 = "1"
+rayon = "1.10"
+regex = "1"
+rustc-hash = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1
