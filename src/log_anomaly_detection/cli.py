@@ -88,6 +88,73 @@ def cmd_parse_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def load_dataset(args: argparse.Namespace) -> object:
+    from log_anomaly_detection.datasets import load_bgl, load_hdfs
+
+    if args.dataset == "hdfs":
+        if not args.labels:
+            raise ValueError("HDFS needs --labels anomaly_label.csv")
+        return load_hdfs(args.log, args.labels, max_lines=args.max_lines, backend=args.backend)
+    return load_bgl(
+        args.log,
+        window_seconds=args.window,
+        step_seconds=args.step,
+        window_lines=args.window_lines,
+        max_lines=args.max_lines,
+        backend=args.backend,
+    )
+
+
+def print_results(results: list[dict[str, object]]) -> None:
+    print(f"{'detector':<18} {'precision':>9} {'recall':>7} {'F1':>6} {'ROC AUC':>8} {'AP':>6}")
+    for r in results:
+        auc = r.get("roc_auc")
+        ap = r.get("average_precision")
+        print(
+            f"{r['detector']!s:<18} {r['precision']:>9.3f} {r['recall']:>7.3f} {r['f1']:>6.3f} "
+            f"{'n/a' if auc is None else f'{auc:.3f}':>8} {'n/a' if ap is None else f'{ap:.3f}':>6}"
+        )
+
+
+def cmd_detect(args: argparse.Namespace) -> int:
+    from log_anomaly_detection.datasets import SessionDataset
+    from log_anomaly_detection.evaluation import evaluate_dataset
+
+    dataset = load_dataset(args)
+    assert isinstance(dataset, SessionDataset)
+    summary = dataset.summary()
+    print(
+        f"{summary['dataset']}: {summary['lines']:,} lines, {summary['sequences']:,} sequences "
+        f"({summary['anomalous']:,} anomalous), {summary['templates']} templates, "
+        f"parsed in {summary['parse_seconds']} s"
+    )
+    report = evaluate_dataset(
+        dataset, args.detectors, train_fraction=args.train_fraction, seed=args.seed
+    )
+    split = report["split"]
+    print(
+        f"train {split['train']:,} ({split['train_normal']:,} normal), "
+        f"test {split['test']:,} ({split['test_anomalies']:,} anomalous)"
+    )
+    print_results(report["results"])
+    if args.output:
+        Path(args.output).write_text(json.dumps(report, indent=2) + "\n")
+    return 0
+
+
+def add_dataset_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--dataset", required=True, choices=["hdfs", "bgl"])
+    p.add_argument("--log", required=True, help="raw log file (.gz allowed)")
+    p.add_argument("--labels", help="HDFS anomaly_label.csv")
+    p.add_argument("--window", type=int, default=3600, help="BGL window, seconds")
+    p.add_argument("--step", type=int, help="BGL window step, seconds (default: the window)")
+    p.add_argument("--window-lines", type=int, help="BGL windows of this many lines instead")
+    p.add_argument("--max-lines", type=int)
+    p.add_argument("--train-fraction", type=float, default=0.5)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--backend", default="auto", choices=["auto", "rust", "python"])
+
+
 def build_parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(
         prog="python -m log_anomaly_detection",
@@ -116,6 +183,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--output", help="write the results as JSON")
     p.add_argument("--backend", default="auto", choices=["auto", "rust", "python"])
     p.set_defaults(func=cmd_parse_eval)
+
+    p = sub.add_parser("detect", help="train and score anomaly detectors on HDFS or BGL")
+    add_dataset_args(p)
+    p.add_argument(
+        "--detectors",
+        nargs="+",
+        default=["pca", "invariants", "logcluster", "iforest"],
+        choices=["pca", "invariants", "logcluster", "iforest"],
+    )
+    p.add_argument("--output", help="write the report as JSON")
+    p.set_defaults(func=cmd_detect)
     return root
 
 

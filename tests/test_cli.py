@@ -66,3 +66,33 @@ def test_module_entrypoint(monkeypatch: pytest.MonkeyPatch, loghub_2k: Path) -> 
     with pytest.raises(SystemExit) as info:
         runpy.run_module("log_anomaly_detection", run_name="__main__")
     assert info.value.code == 0
+
+
+def test_detect_command_on_bgl(
+    loghub_2k: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    out_file = tmp_path / "d.json"
+    args = ["detect", "--dataset", "bgl", "--log", str(loghub_2k / "BGL_2k.log.gz")]
+    assert (
+        main(
+            [
+                *args,
+                "--window-lines",
+                "20",
+                "--detectors",
+                "pca",
+                "iforest",
+                "--output",
+                str(out_file),
+            ]
+        )
+        == 0
+    )
+    text = capsys.readouterr().out
+    assert "BGL: 2,000 lines" in text and "Isolation forest" in text
+    assert len(json.loads(out_file.read_text())["results"]) == 2
+
+
+def test_detect_hdfs_needs_labels(loghub_2k: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["detect", "--dataset", "hdfs", "--log", str(loghub_2k / "HDFS_2k.log.gz")]) == 2
+    assert "--labels" in capsys.readouterr().err

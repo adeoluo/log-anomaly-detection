@@ -92,6 +92,7 @@ ignore_missing_imports = true
 addopts = "-ra -q -p no:cacheprovider --basetemp=.pytest-tmp"
 markers = [
     "slow: larger-scale tests",
+    "validation: comparisons with reference libraries (uv sync --group validation)",
 ]
 testpaths = ["tests"]
 
