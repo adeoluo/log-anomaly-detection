@@ -1,4 +1,4 @@
-.PHONY: help setup lint format type test coverage evaluation run diagram docker-build docker-up clean all
+.PHONY: rust-check rust-develop parity parse-eval help setup lint format type test coverage diagram docker-build docker-up clean all
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -25,14 +25,21 @@ test: ## Run tests
 coverage: ## Tests with coverage gate
 	uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=80
 
-evaluation: ## Reproduce the results table
-	uv run python -m log_anomaly_detection.evaluation
+rust-check: ## Rust core: fmt, clippy (with and without Python), unit tests
+	cd rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo clippy --all-targets --features python -- -D warnings && cargo test
 
-run: ## Run the application entrypoint
-	uv run python -m log_anomaly_detection
+rust-develop: ## Rebuild the Rust core into .venv after editing rust/ (uv sync also builds it)
+	uv sync --group rust
+	uv run --no-sync maturin develop --uv --release
+
+parity: ## Rust vs Python parity tests
+	LAD_REQUIRE_RUST=1 uv run --no-sync pytest tests/test_rust_parity.py -v
+
+parse-eval: ## Parsing accuracy on the bundled Loghub-2k samples
+	uv run python -m log_anomaly_detection parse-eval --data-dir tests/fixtures/loghub_2k
 
 diagram: ## Render architecture diagram to SVG
-	mmdc -i docs/architecture/architecture.mmd \
+	npx -y @mermaid-js/mermaid-cli -i docs/architecture/architecture.mmd \
 	     -o docs/architecture/architecture.svg \
 	     -c mermaid.config.json -b transparent
 
@@ -43,7 +50,7 @@ docker-up: ## Run via docker compose
 	docker compose up --build
 
 clean: ## Remove caches and artifacts
-	rm -rf .pytest_cache .mypy_cache .ruff_cache dist build *.egg-info coverage.xml
+	rm -rf .pytest_cache .pytest-tmp .mypy_cache .ruff_cache dist build *.egg-info coverage.xml
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
 all: lint type coverage ## Full local gate (mirror of continuous integration)
