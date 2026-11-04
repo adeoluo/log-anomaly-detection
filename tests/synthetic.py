@@ -37,3 +37,27 @@ def workflow_counts(
     x = np.vstack([x_norm, x_anom])
     y = np.concatenate([np.zeros(n_normal, np.uint8), np.ones(n_anomalous, np.uint8)])
     return x, y
+
+
+def hdfs_like_lines(n_blocks: int, anomalous: set[int], seed: int = 0) -> list[str]:
+    """Interleaved HDFS-format lines for ``n_blocks`` block sessions; listed blocks fail."""
+
+    rng = np.random.default_rng(seed)
+    head = "081109 2035{:02d} {} INFO dfs.DataNode$PacketResponder: "
+    out: list[tuple[float, str]] = []
+    for b in range(n_blocks):
+        t0 = b * 3.0
+        blk = f"blk_{1000 + b}"
+        steps = [
+            f"Receiving block {blk} src: /10.0.0.{b % 250}:50010 dest: /10.0.1.{b % 250}:50010",
+            f"Received block {blk} of size {int(rng.integers(1000, 9000))} from /10.0.0.{b % 250}",
+            f"PacketResponder {int(rng.integers(0, 3))} for block {blk} terminating",
+        ]
+        if b in anomalous:
+            steps[1] = (
+                f"Exception in receiveBlock for block {blk} java.io.IOException: Connection reset"
+            )
+        for i, text in enumerate(steps):
+            out.append((t0 + i * 2.5, head.format(int(t0) % 60, 100 + b % 50) + text))
+    out.sort(key=lambda item: item[0])
+    return [line for _, line in out]

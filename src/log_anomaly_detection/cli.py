@@ -190,6 +190,124 @@ def cmd_regress(args: argparse.Namespace) -> int:
     return 0
 
 
+DEFAULT_SESSION_REGEX = {"HDFS": r"blk_-?\d+"}
+
+
+def build_monitor(args: argparse.Namespace) -> tuple[object, dict[str, int] | None, dict[str, int]]:
+    """A StreamMonitor trained as the stream and serve commands ask; plus the labels if given."""
+
+    from itertools import islice
+
+    from log_anomaly_detection.datasets import read_hdfs_labels
+    from log_anomaly_detection.parser import iter_lines
+    from log_anomaly_detection.streaming import StreamMonitor
+
+    settings = settings_for(args.dataset)
+    regex = args.session_regex or DEFAULT_SESSION_REGEX.get(args.dataset)
+    monitor = StreamMonitor(
+        LogParser.for_dataset(settings, backend=args.backend),
+        session_regex=regex,
+        idle_lines=args.idle_lines,
+        window_lines=args.window_lines,
+        detector=args.detector,
+    )
+    labels = read_hdfs_labels(args.labels) if args.labels else None
+    info: dict[str, int] = {}
+    if args.train:
+        lines = iter_lines(args.train, args.train_lines)
+        exclude = {k for k, v in labels.items() if v} if labels else None
+        info = monitor.train(islice(lines, None), exclude_keys=exclude)
+    return monitor, labels, info
+
+
+def cmd_stream(args: argparse.Namespace) -> int:
+    from itertools import islice
+
+    from log_anomaly_detection.parser import iter_lines
+    from log_anomaly_detection.streaming import StreamMonitor
+
+    if not args.train:
+        raise ValueError("stream needs --train to fit a detector first")
+    monitor, labels, info = build_monitor(args)
+    assert isinstance(monitor, StreamMonitor)
+    print(
+        f"trained {args.detector} on {info['lines']:,} lines: {info['sessions']:,} sessions, "
+        f"{info['templates']} templates",
+        flush=True,
+    )
+    source = sys.stdin if args.input == "-" else iter_lines(args.input)
+    stop = None if args.max_lines is None else args.skip_lines + args.max_lines
+    stream = islice((line.rstrip("\n") for line in source), args.skip_lines, stop)
+    start = time.perf_counter()
+    alerts = []
+    for alert in monitor.process_many(stream):
+        alerts.append(alert)
+    alerts += monitor.flush()
+    seconds = time.perf_counter() - start
+    shown = 0
+    for alert in alerts:
+        if args.json:
+            print(json.dumps(alert.as_dict()))
+            continue
+        if shown < args.show:
+            tag = ""
+            if labels is not None and alert.kind == "session":
+                tag = " [labelled anomaly]" if labels.get(alert.key) else " [labelled normal]"
+            print(
+                f"ALERT {alert.kind:<7} {alert.key:<28} score {alert.score:10.3f} > "
+                f"{alert.threshold:.3f}  events {alert.events}{tag}"
+            )
+            shown += 1
+    stats = monitor.stats
+    rate = stats["lines"] / seconds if seconds > 0 else float("inf")
+    summary = (
+        f"{stats['lines']:,} lines in {seconds:.1f} s ({rate:,.0f} lines/s), "
+        f"{stats['sessions_scored']:,} sessions scored, {len(alerts):,} alerts"
+    )
+    if labels is not None:
+        flagged = [a for a in alerts if a.kind == "session"]
+        hits = sum(1 for a in flagged if labels.get(a.key))
+        summary += f"; {hits:,} of {len(flagged):,} session alerts are labelled anomalies"
+    print(summary, file=sys.stderr if args.json else sys.stdout)
+    return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:  # pragma: no cover - blocking server
+    from log_anomaly_detection.configuration import settings
+    from log_anomaly_detection.service import App, serve
+    from log_anomaly_detection.streaming import StreamMonitor
+
+    monitor, _, info = build_monitor(args)
+    assert isinstance(monitor, StreamMonitor)
+    if info:
+        print(f"trained {args.detector} on {info['lines']:,} lines ({info['templates']} templates)")
+    serve(
+        App(monitor),
+        args.host or settings.host,
+        args.port or settings.port,
+        settings.max_body_bytes,
+    )
+    return 0
+
+
+def add_monitor_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--dataset", default="HDFS", choices=sorted(BENCHMARK_SETTINGS))
+    p.add_argument("--train", help="historical log to learn templates and fit the detector")
+    p.add_argument("--train-lines", type=int, help="use only the first N training lines")
+    p.add_argument(
+        "--labels", help="HDFS anomaly_label.csv: keep labelled anomalies out of training"
+    )
+    p.add_argument(
+        "--detector", default="pca", choices=["pca", "invariants", "logcluster", "iforest"]
+    )
+    p.add_argument("--session-regex", help="session key regex (default: block ids for HDFS)")
+    p.add_argument(
+        "--idle-lines", type=int, default=20_000, help="close a session after N idle lines"
+    )
+    p.add_argument("--window-lines", type=int, default=100, help="window size without sessions")
+    p.add_argument("--backend", default="auto", choices=["auto", "rust", "python"])
+
+
 def add_dataset_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--dataset", required=True, choices=["hdfs", "bgl"])
     p.add_argument("--log", required=True, help="raw log file (.gz allowed)")
@@ -253,6 +371,21 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--min-relative", type=float, default=0.05, help="smallest relative shift")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_regress)
+
+    p = sub.add_parser("stream", help="train on history, then stream lines and print alerts")
+    add_monitor_args(p)
+    p.add_argument("--input", default="-", help="log to stream ('-' for stdin)")
+    p.add_argument("--skip-lines", type=int, default=0, help="skip the first N input lines")
+    p.add_argument("--max-lines", type=int, help="stop after N input lines")
+    p.add_argument("--show", type=int, default=20, help="alerts to print")
+    p.add_argument("--json", action="store_true", help="every alert as a JSON line")
+    p.set_defaults(func=cmd_stream)
+
+    p = sub.add_parser("serve", help="run the HTTP service")
+    add_monitor_args(p)
+    p.add_argument("--host")
+    p.add_argument("--port", type=int)
+    p.set_defaults(func=cmd_serve)
     return root
 
 
