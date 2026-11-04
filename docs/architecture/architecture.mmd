@@ -1,38 +1,47 @@
----
-title: System Architecture - Log Anomaly Detection
-config:
-  theme: base
-  themeVariables:
-    fontFamily: "Inter, system-ui, sans-serif"
-    primaryColor: "#F8FAFC"
-    primaryBorderColor: "#1E293B"
-    primaryTextColor: "#1E293B"
-    lineColor: "#64748B"
-    clusterBkg: "#E2E8F0"
-    clusterBorder: "#94A3B8"
----
 flowchart LR
+    classDef edge     fill:#F59E0B,stroke:#1E293B,color:#1E293B,stroke-width:1px;
     classDef core     fill:#6366F1,stroke:#1E293B,color:#ffffff,stroke-width:1px;
     classDef data     fill:#10B981,stroke:#1E293B,color:#ffffff,stroke-width:1px;
-    classDef external fill:#F59E0B,stroke:#1E293B,color:#1E293B,stroke-width:1px;
-    classDef danger   fill:#EF4444,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef control  fill:#0EA5E9,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef obs      fill:#CBD5E1,stroke:#1E293B,color:#1E293B,stroke-width:1px;
 
-    User([User]):::external
-
-    subgraph Application["Application Service"]
-        API[API Layer]:::core
-        Core[Core Engine]:::core
-        Evaluation[Evaluation Harness]:::core
+    subgraph Interfaces["Interfaces"]
+        direction TB
+        Users([Operators and<br/>log collectors]):::edge
+        CLI["CLI<br/>parse, detect, stream"]:::edge
+        HTTP["HTTP service<br/>ingest, score"]:::core
+        Limits["Request limits<br/>size, lines"]:::control
+        Users --> CLI ~~~ HTTP --> Limits
     end
 
-    Cache[(Semantic Cache)]:::data
-    Store[(Datastore / Index)]:::data
-    LLM{{LLM Provider}}:::external
+    subgraph Parsing["Parsing (Rust core)"]
+        direction TB
+        Formats["Formats, masks<br/>LogPAI settings"]:::control
+        Drain["Drain tree<br/>parallel chunks"]:::core
+        Reference["Python reference<br/>exact parity"]:::core
+        Templates[("Template store")]:::data
+        Formats --> Drain --> Templates ~~~ Reference
+    end
 
-    User -->|request| API
-    API --> Core
-    Core -->|lookup| Cache
-    Core -->|retrieve| Store
-    Core -->|completion| LLM
-    Core -.->|traces/metrics| Evaluation
-    Core -->|response| User
+    subgraph Detection["Detection"]
+        direction TB
+        Features["Sessions, windows<br/>event counts"]:::core
+        Count["PCA, invariants<br/>LogCluster, iForest"]:::core
+        Neural["DeepLog LSTM<br/>transformer"]:::core
+        Monitor["Stream monitor<br/>sessionize, score"]:::core
+        Changes["Change points<br/>CUSUM, BOCPD"]:::core
+        Features --> Count ~~~ Neural ~~~ Monitor ~~~ Changes
+    end
+
+    subgraph Outputs["Outputs and evaluation"]
+        direction TB
+        Alerts["Alerts<br/>sessions, rates"]:::obs
+        Metrics["Metrics<br/>Prometheus text"]:::obs
+        Bench["Benchmarks<br/>GA, F1, cover"]:::obs
+        Datasets[("Loghub, HDFS, BGL<br/>TCPD")]:::data
+        Alerts ~~~ Metrics ~~~ Datasets --> Bench
+    end
+
+    Interfaces -->|lines| Parsing
+    Parsing -->|event ids| Detection
+    Detection -->|scores| Outputs
