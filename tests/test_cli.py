@@ -127,3 +127,26 @@ def test_regress_command(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> 
     short = tmp_path / "short.txt"
     short.write_text("1\n2\n")
     assert main(["regress", str(short)]) == 2
+
+
+def test_stream_command(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from tests.synthetic import hdfs_like_lines
+
+    train = tmp_path / "train.log"
+    train.write_text("\n".join(hdfs_like_lines(200, set(), seed=1)) + "\n")
+    live = tmp_path / "live.log"
+    live.write_text("\n".join(hdfs_like_lines(50, {4, 9}, seed=2)) + "\n")
+    labels = tmp_path / "labels.csv"
+    labels.write_text(
+        "BlockId,Label\n"
+        + "".join(f"blk_{1000 + b},{'Anomaly' if b in (4, 9) else 'Normal'}\n" for b in range(200))
+    )
+    args = ["stream", "--train", str(train), "--input", str(live), "--labels", str(labels)]
+    assert main([*args, "--detector", "invariants", "--idle-lines", "12"]) == 0
+    out = capsys.readouterr().out
+    assert "trained invariants on 600 lines" in out
+    assert "2 of 2 session alerts are labelled anomalies" in out
+    assert main([*args, "--json", "--skip-lines", "3", "--max-lines", "60"]) == 0
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert all(json.loads(line)["kind"] for line in lines[1:])
+    assert main(["stream", "--input", str(live)]) == 2
