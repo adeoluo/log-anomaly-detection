@@ -96,3 +96,12 @@ def test_detect_command_on_bgl(
 def test_detect_hdfs_needs_labels(loghub_2k: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["detect", "--dataset", "hdfs", "--log", str(loghub_2k / "HDFS_2k.log.gz")]) == 2
     assert "--labels" in capsys.readouterr().err
+
+
+def test_detect_with_neural_detectors(loghub_2k: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    pytest.importorskip("torch")
+    args = ["detect", "--dataset", "bgl", "--log", str(loghub_2k / "BGL_2k.log.gz")]
+    extra = ["--window-lines", "20", "--epochs", "1", "--device", "cpu"]
+    assert main([*args, *extra, "--detectors", "deeplog", "transformer"]) == 0
+    out = capsys.readouterr().out
+    assert "DeepLog" in out and "Transformer" in out
