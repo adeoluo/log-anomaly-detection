@@ -246,11 +246,13 @@ def detect_regressions(
     method: str = "cusum",
     direction: str = "up",
     min_relative: float = 0.05,
+    min_segment: int = 3,
     **kwargs: Any,
 ) -> list[Regression]:
     """Level shifts of at least ``min_relative`` in ``direction`` ("up", "down" or "both").
 
-    For latency or memory "up" is a regression; for throughput "down" is.
+    For latency or memory "up" is a regression; for throughput "down" is. Segments shorter than
+    ``min_segment`` points are spikes, not level shifts: their boundaries are dropped.
     """
 
     if direction not in ("up", "down", "both"):
@@ -262,6 +264,7 @@ def detect_regressions(
         cps = BOCPD(**kwargs).detect(x)
     else:
         raise ValueError("method must be 'cusum' or 'bocpd'")
+    cps = drop_short_segments(cps, x.size, min_segment)
     bounds = [0, *cps, x.size]
     out = []
     for i, cp in enumerate(cps, start=1):
@@ -277,6 +280,19 @@ def detect_regressions(
             continue
         out.append(reg)
     return out
+
+
+def drop_short_segments(cps: Sequence[int], n: int, min_segment: int) -> list[int]:
+    """Remove the boundaries of every segment shorter than ``min_segment`` (isolated spikes)."""
+
+    if min_segment <= 1:
+        return list(cps)
+    bounds = [0, *sorted(set(cps)), n]
+    drop: set[int] = set()
+    for i in range(len(bounds) - 1):
+        if bounds[i + 1] - bounds[i] < min_segment:
+            drop.update(b for b in (bounds[i], bounds[i + 1]) if 0 < b < n)
+    return [c for c in bounds[1:-1] if c not in drop]
 
 
 # ---------------------------------------------------------------- TCPD evaluation metrics
