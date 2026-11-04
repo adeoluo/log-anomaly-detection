@@ -22,6 +22,7 @@ import csv
 import gzip
 import io
 import zipfile
+from array import array
 from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -183,11 +184,11 @@ def read_truth(path: str | Path, member: str | None = None) -> tuple[NDArray[np.
     """
 
     codes = TemplateCodes()
-    values: list[int] = []
+    values = array("q")
     with _open_text(Path(path), member) as handle:
         reader = csv.reader(handle)
         header = next(reader)
         column = header.index("EventTemplate")
         for row in reader:
             values.append(codes.code(row[column] if column < len(row) else ""))
-    return np.asarray(values, dtype=np.int64), codes.strings
+    return np.frombuffer(values, dtype=np.int64).copy(), codes.strings
