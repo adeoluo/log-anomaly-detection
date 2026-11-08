@@ -4,24 +4,11 @@ The rendered overview is [architecture/architecture.svg](architecture/architectu
 [architecture/architecture.mmd](architecture/architecture.mmd)). This page adds the data flow at
 the level of modules.
 
-```mermaid
-flowchart LR
-    raw[raw log file or stream] --> fmt[formats.LogFormat<br/>header split]
-    fmt --> mask[masking regexes]
-    mask --> drain[drain / rust drain.rs<br/>parse tree]
-    drain --> ids[event id per line]
-    ids --> sess[datasets: block sessions<br/>or time windows]
-    sess --> counts[features.count_matrix]
-    sess --> windows[sequence.make_windows]
-    counts --> classic[PCA, invariants,<br/>LogCluster, iForest]
-    windows --> neural[DeepLog, transformer]
-    classic --> eval[evaluation: P, R, F1,<br/>ROC AUC, AP]
-    neural --> eval
-    ids --> monitor[streaming.StreamMonitor]
-    monitor --> alerts[alerts]
-    metric[numeric metric] --> cpd[changepoint: CUSUM, BOCPD]
-    cpd --> regress[regressions]
-```
+<p align="center">
+  <img src="architecture/pipeline.svg" alt="Architecture diagram" width="841">
+</p>
+
+<sub>Legend: amber = entry points and external systems, indigo = core logic, green = data and state, blue = validation and control, grey = observability and outputs.</sub>
 
 ## Modules
 

@@ -1,0 +1,31 @@
+flowchart LR
+    classDef edge     fill:#F59E0B,stroke:#1E293B,color:#1E293B,stroke-width:1px;
+    classDef core     fill:#6366F1,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef data     fill:#10B981,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef control  fill:#0EA5E9,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef obs      fill:#CBD5E1,stroke:#1E293B,color:#1E293B,stroke-width:1px;
+    subgraph Parse["Parse"]
+        direction TB
+        raw["raw log file or stream"]:::edge --> fmt["formats.LogFormat<br/>header split"]:::core
+        fmt --> mask["masking regexes"]:::core
+        mask --> drain["drain / drain.rs<br/>parse tree"]:::core
+        drain --> ids["event id per line"]:::data
+    end
+    subgraph Detect["Batch detection"]
+        direction TB
+        sess["block sessions<br/>or time windows"]:::data
+        sess --> counts["features.count_matrix"]:::core
+        sess --> windows["sequence.make_windows"]:::core
+        counts --> classic["PCA, invariants,<br/>LogCluster, iForest"]:::core
+        windows --> neural["DeepLog, transformer"]:::core
+        classic --> eval["evaluation: P, R, F1,<br/>ROC AUC, AP"]:::obs
+        neural --> eval
+    end
+    subgraph Online["Online"]
+        direction TB
+        monitor["streaming.StreamMonitor"]:::core --> alerts["alerts"]:::obs
+        metric["numeric metric"]:::edge --> cpd["changepoint:<br/>CUSUM, BOCPD"]:::core
+        cpd --> regress["regressions"]:::obs
+    end
+    Parse -->|event ids| Detect
+    Parse -->|event ids| Online
