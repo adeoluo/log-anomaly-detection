@@ -13,5 +13,5 @@ pub mod pipeline;
 #[cfg(feature = "python")]
 mod python;
 
-pub use drain::{split_tokens, Drain, DrainConfig, Masker, WILDCARD};
-pub use pipeline::{Extract, LogFormat, ParsedFile, Pipeline, Unmatched, UNMATCHED};
+pub use drain::{Drain, DrainConfig, Masker, WILDCARD, split_tokens};
+pub use pipeline::{Extract, LogFormat, ParsedFile, Pipeline, UNMATCHED, Unmatched};

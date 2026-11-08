@@ -11,7 +11,7 @@ use rayon::prelude::*;
 use regex::Regex;
 use rustc_hash::FxHashMap;
 
-use crate::drain::{py_strip, Drain, Masker};
+use crate::drain::{Drain, Masker, py_strip};
 
 /// Marks a line that did not match the log format when unmatched lines are skipped.
 pub const UNMATCHED: u32 = u32::MAX;
@@ -383,9 +383,10 @@ mod tests {
             ..Extract::default()
         };
         assert!(p.parse_file(path.to_str().unwrap(), &bad, None, 2).is_err());
-        assert!(p
-            .parse_file("/nonexistent/file.log", &extract, None, 2)
-            .is_err());
+        assert!(
+            p.parse_file("/nonexistent/file.log", &extract, None, 2)
+                .is_err()
+        );
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/adeoluo/log-anomaly-detection/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/adeoluo/log-anomaly-detection/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/adeoluo/log-anomaly-detection/releases"><img alt="Release" src="https://img.shields.io/github/v/release/adeoluo/log-anomaly-detection"></a>
-  <img alt="Python" src="https://img.shields.io/badge/python-3.11%20%7C%203.12-blue">
+  <img alt="Python" src="https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14%20%7C%203.15-blue">
   <img alt="Rust" src="https://img.shields.io/badge/rust-core-B7410E">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
 </p>
@@ -375,7 +375,7 @@ make parity      # Rust vs Python parity, extension required
   rate alerts, every HTTP route and error over the handler and a real socket, and each CLI
   command.
 
-CI runs format, lint, type check and the coverage-gated tests on Python 3.11 and 3.12 with the
+CI runs format, lint, type check and the coverage-gated tests on Python 3.12, 3.13, 3.14 and 3.15 with the
 Rust extension required, a Rust job (fmt, clippy with and without the Python feature, unit tests,
 parity), and builds the package and Docker image. CodeQL runs on pushes to main and weekly.
 
