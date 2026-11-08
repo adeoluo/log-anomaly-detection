@@ -1,10 +1,22 @@
 cff-version: 1.2.0
-message: "If you use this work, please cite it."
+message: "If you use this software, please cite it as below."
+type: software
 title: "Log Anomaly Detection"
+abstract: "Log parsing and anomaly detection on Loghub: a Rust Drain parser, six detectors from PCA to DeepLog and a transformer, streaming alerts and change-point regression detection."
 authors:
   - family-names: "Ogunnoiki"
     given-names: "Adeolu"
-version: 0.1.0
-date-released: 2026-01-01
+version: "0.1.0"
+date-released: "2026-11-04"
 license: MIT
-url: "REPO_URL"
+repository-code: "https://github.com/adeoluo/log-anomaly-detection"
+url: "https://github.com/adeoluo/log-anomaly-detection"
+keywords:
+  - "anomaly-detection"
+  - "change-point-detection"
+  - "deeplog"
+  - "drain"
+  - "log-analysis"
+  - "log-parsing"
+  - "loghub"
+  - "rust"
