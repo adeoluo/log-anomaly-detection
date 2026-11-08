@@ -1,7 +1,7 @@
 [package]
 name = "log-anomaly-rs"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Rust core of log-anomaly-detection: the Drain log parser and streaming file parsing, identical to the Python reference"
 license = "MIT"
 authors = ["Adeolu Ogunnoiki"]
@@ -18,9 +18,9 @@ default = []
 python = ["dep:pyo3"]
 
 [dependencies]
-pyo3 = { version = "0.30", optional = true, features = ["abi3-py311"] }
+pyo3 = { version = "0.30.1", optional = true, features = ["abi3-py312"] }
 flate2 = "1"
-rayon = "1.10"
+rayon = "1.12"
 regex = "1"
 rustc-hash = "2"
 
